@@ -7,6 +7,10 @@
 
 Checkmk 2.x MKP plugin for monitoring Hetzner Storage Boxes through the Hetzner Console API.
 
+> **Fork notice:** this is a fork of [47k/checkmk-hetzner-storagebox](https://github.com/47k/checkmk-hetzner-storagebox).
+> Everything through v0.1.3 is the original author's work; v0.2.0 fixes Checkmk 2.5
+> compatibility (see [CHANGELOG](CHANGELOG.md)) and is maintained here going forward.
+
 ## Overview
 
 The package adds a Checkmk special agent, discovery, check plugin, WATO rulesets, and metrics for Hetzner Storage Boxes. It discovers one service per Storage Box and monitors:
@@ -301,6 +305,7 @@ CRIT - API error (auth_error): HTTP 401 Unauthorized while fetching https://api.
 
 These limitations describe the intended scope of the 0.2.0 release.
 
-## Author
+## Authors
 
-Tony Boston <tboston@csitlab.org>
+- Manuel "Overlord" Michalski <www.47k.de> — original author (through v0.1.3)
+- Tony Boston <tboston@csitlab.org> — maintainer (v0.2.0+)

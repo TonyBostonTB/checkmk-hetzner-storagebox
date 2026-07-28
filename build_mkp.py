@@ -43,6 +43,8 @@ INFO: dict = {
     "name": PACKAGE_NAME,
     "description": (
         'Checkmk special agent for monitoring Hetzner Storage Boxes via the Hetzner Console API.\n'
+        'Fork of 47k/checkmk-hetzner-storagebox by Manuel "Overlord" Michalski '
+        "(original author through v0.1.3).\n"
         "\n"
         f"Version {VERSION}:\n"
         "- Fixed Checkmk 2.5 compatibility: the result-cache rule editor used a "

@@ -167,7 +167,7 @@ def _storage_boxes_by_item(raw_storage_boxes: list[Any]) -> dict[str, dict[str, 
 
 
 def _base_item_name(storage_box: Mapping[str, Any]) -> str:
-    for key in ("username", "id"):
+    for key in ("name", "username", "id"):
         value = storage_box.get(key)
         if value not in (None, ""):
             return str(value)
@@ -240,12 +240,16 @@ def check_hetzner_storagebox(item: str, params: Mapping[str, Any], section: Sect
 
     status = _string_at(storage_box, ("status",)) or "unknown"
     status_state = State.OK if status.lower() in ACTIVE_STATUSES else _state_from_params(params, "status_state", State.WARN)
+    login = _string_at(storage_box, ("username",))
+    server = _string_at(storage_box, ("server",))
 
     usage_percent = _usage_percent(used_bytes, total_bytes)
     usage_state = _usage_state(usage_percent, usage_levels)
     fields = _display_fields(
         status=status,
         status_state=status_state,
+        login=login,
+        server=server,
         cache_info=section["cache"],
         used_bytes=used_bytes,
         total_bytes=total_bytes,
@@ -345,6 +349,8 @@ def _display_fields(
     *,
     status: str,
     status_state: State,
+    login: str | None,
+    server: str | None,
     cache_info: CacheInfo | None,
     used_bytes: float | None,
     total_bytes: float | None,
@@ -378,6 +384,11 @@ def _display_fields(
         parts.append(cache_field)
 
     parts.append(_display_field(f"Status: {_format_status(status)}", status_state))
+
+    if server:
+        parts.append(_display_field(f"Login: {server}"))
+    elif login:
+        parts.append(_display_field(f"Login: {login}"))
 
     if snapshots_bytes is not None:
         parts.append(

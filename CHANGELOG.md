@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0 - 2026-07-28
+
+### Changed
+
+- **Breaking: service item names now prefer the Storage Box's display name**
+  (the `name` field set in the Hetzner Console) over its system `username`
+  or numeric `id`. Confirmed against the live `api.hetzner.com/v1` response —
+  `name` sits alongside `id`/`username` on the Storage Box object. Falls back
+  to `username` then `id` when `name` is empty; duplicate names still get
+  disambiguated with `(<id>)` as before.
+  Existing installations: this changes service identity for any Storage Box
+  that has a console name set, so Checkmk will show the old items as vanished
+  and discover new ones — rediscover the affected host(s) after upgrading.
+- Added a "Login: `<username>.your-storagebox.de`" detail line to the check
+  output so the system login/hostname stays visible even though it's no
+  longer the item name.
+
 ## 0.2.0 - 2026-07-28
 
 ### Fixed

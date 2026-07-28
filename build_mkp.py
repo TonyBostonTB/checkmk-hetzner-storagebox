@@ -21,7 +21,7 @@ import tarfile
 import time
 
 PACKAGE_NAME = "hetzner_storagebox"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 OUTPUT = f"{PACKAGE_NAME}-{VERSION}.mkp"
 
 # (source path relative to repo root, archive path inside cmk_addons_plugins.tar)

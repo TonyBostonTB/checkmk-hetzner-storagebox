@@ -1,6 +1,6 @@
 name: hetzner_storagebox
 title: Hetzner Storage Box Monitoring
-version: 0.2.0
+version: 0.3.0
 author: Tony Boston (tboston@csitlab.org)
 description: Checkmk special agent for monitoring Hetzner Storage Boxes via the Hetzner Console API. Fork of 47k/checkmk-hetzner-storagebox by Manuel "Overlord" Michalski (original author through v0.1.3). 0.2.0 fixes Checkmk 2.5 compatibility (rulesets no longer depend on the removed cmk.gui.form_specs.private API).
 license: Apache-2.0

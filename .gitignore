@@ -12,7 +12,7 @@ venv/
 .DS_Store
 
 # CheckMK
-#*.mkp
+*.mkp
 
 # Editor
 .idea/

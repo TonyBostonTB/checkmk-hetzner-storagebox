@@ -3,16 +3,16 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from cmk.gui import valuespec as legacy_valuespecs
-from cmk.gui.form_specs.private import LegacyValueSpec
 from cmk.rulesets.v1 import Help, Label, Title
 from cmk.rulesets.v1.form_specs import (
+    BooleanChoice,
+    CascadingSingleChoice,
+    CascadingSingleChoiceElement,
     DataSize,
     DefaultValue,
     DictElement,
     Dictionary,
+    FixedValue,
     Float,
     IECMagnitude,
     InputHint,
@@ -143,42 +143,56 @@ def _migrate_cache_enabled(
     value: object,
     legacy_ttl: object = None,
     legacy_stale_on_error: object = None,
-) -> dict[str, object] | bool:
+) -> tuple[str, dict[str, object] | None]:
+    """Normalize legacy cache_enabled values into the CascadingSingleChoice tuple shape.
+
+    Idempotent: an already-migrated ("enabled"/"disabled", ...) tuple passed back in
+    is reconstructed to the same shape, as required by the FormSpec migrate contract.
+    """
     stale_on_error = _cache_bool_value(legacy_stale_on_error, True)
 
     if isinstance(value, tuple) and len(value) == 2:
         choice, nested_value = value
         if _cache_bool_value(choice, True) is False:
-            return False
+            return ("disabled", None)
         if not isinstance(nested_value, dict):
             nested_value = {}
-        return {
-            "cache_ttl": _cache_ttl_value(nested_value.get("cache_ttl", nested_value.get("ttl", legacy_ttl))),
-            "cache_stale_on_error": _cache_bool_value(
-                nested_value.get("cache_stale_on_error", nested_value.get("stale_on_error", stale_on_error)),
-                True,
-            ),
-        }
+        return (
+            "enabled",
+            {
+                "cache_ttl": _cache_ttl_value(nested_value.get("cache_ttl", nested_value.get("ttl", legacy_ttl))),
+                "cache_stale_on_error": _cache_bool_value(
+                    nested_value.get("cache_stale_on_error", nested_value.get("stale_on_error", stale_on_error)),
+                    True,
+                ),
+            },
+        )
 
     if not isinstance(value, dict) and _cache_bool_value(value, True) is False:
-        return False
+        return ("disabled", None)
 
     if isinstance(value, dict):
         enabled = value.get("enabled", value.get("cache_enabled"))
         if enabled is not None and _cache_bool_value(enabled, True) is False:
-            return False
-        return {
-            "cache_ttl": _cache_ttl_value(value.get("cache_ttl", value.get("ttl", legacy_ttl))),
-            "cache_stale_on_error": _cache_bool_value(
-                value.get("cache_stale_on_error", value.get("stale_on_error", stale_on_error)),
-                True,
-            ),
-        }
+            return ("disabled", None)
+        return (
+            "enabled",
+            {
+                "cache_ttl": _cache_ttl_value(value.get("cache_ttl", value.get("ttl", legacy_ttl))),
+                "cache_stale_on_error": _cache_bool_value(
+                    value.get("cache_stale_on_error", value.get("stale_on_error", stale_on_error)),
+                    True,
+                ),
+            },
+        )
 
-    return {
-        "cache_ttl": _cache_ttl_value(legacy_ttl),
-        "cache_stale_on_error": stale_on_error,
-    }
+    return (
+        "enabled",
+        {
+            "cache_ttl": _cache_ttl_value(legacy_ttl),
+            "cache_stale_on_error": stale_on_error,
+        },
+    )
 
 
 def _migrate_integration_params(value: object) -> dict[str, object]:
@@ -197,92 +211,55 @@ def _migrate_integration_params(value: object) -> dict[str, object]:
     return migrated
 
 
-class _ResultCacheValueSpec(legacy_valuespecs.ValueSpec[Any]):
-    def __init__(self) -> None:
-        super().__init__(title="Result cache", help=RESULT_CACHE_HELP)
-        self._editor = legacy_valuespecs.Dictionary(
-            elements=[
-                (
-                    "cache_ttl",
-                    legacy_valuespecs.Integer(
-                        title="Result cache TTL",
-                        help="Cache validity in seconds. Default: 3600 seconds (1 hour).",
-                        unit="seconds",
-                        default_value=DEFAULT_CACHE_TTL_SECONDS,
-                        minvalue=0,
-                    ),
-                ),
-                (
-                    "cache_stale_on_error",
-                    legacy_valuespecs.Checkbox(
-                        label="Use stale cache on collection error",
-                        help=(
-                            "If fresh Hetzner API collection fails after the cache has expired, emit the stale "
-                            "cached payload with visible cache status instead of returning only the collection error. "
-                            "Storage usage thresholds are still evaluated against the returned cached dataset."
-                        ),
-                        default_value=True,
-                    ),
-                ),
-            ],
-            required_keys=["cache_ttl", "cache_stale_on_error"],
-        )
-
-    def _normalized_value(self, value: object) -> dict[str, object]:
-        if isinstance(value, dict):
-            return {
-                "cache_ttl": _cache_ttl_value(value.get("cache_ttl", value.get("ttl"))),
-                "cache_stale_on_error": _cache_bool_value(
-                    value.get("cache_stale_on_error", value.get("stale_on_error")),
-                    True,
-                ),
-            }
-        return {
-            "cache_ttl": DEFAULT_CACHE_TTL_SECONDS,
-            "cache_stale_on_error": True,
-        }
-
-    def canonical_value(self) -> dict[str, object]:
-        return self._normalized_value({})
-
-    def render_input(self, varprefix: str, value: object) -> None:
-        self._editor.render_input(varprefix, self._normalized_value(value))
-
-    def mask(self, value: object) -> dict[str, object]:
-        return self._normalized_value(value)
-
-    def value_to_html(self, value: object) -> str:
-        if not isinstance(value, dict):
-            return "disabled"
-
-        normalized = self._normalized_value(value)
-        ttl = normalized["cache_ttl"]
-        stale = "on" if normalized["cache_stale_on_error"] else "off"
-        return f"TTL: {ttl} seconds, stale on collection error: {stale}"
-
-    def value_to_json(self, value: object) -> dict[str, object]:
-        return self._normalized_value(value)
-
-    def value_from_json(self, json_value: object) -> dict[str, object]:
-        return self._normalized_value(json_value)
-
-    def from_html_vars(self, varprefix: str) -> dict[str, object]:
-        return self._normalized_value(self._editor.from_html_vars(varprefix))
-
-    def validate_datatype(self, value: object, varprefix: str) -> None:
-        if isinstance(value, dict):
-            self._editor.validate_datatype(self._normalized_value(value), varprefix)
-
-    def _validate_value(self, value: object, varprefix: str) -> None:
-        if isinstance(value, dict):
-            self._editor.validate_value(self._normalized_value(value), varprefix)
-
-
-def _result_cache_form() -> LegacyValueSpec:
-    return LegacyValueSpec(
+def _result_cache_form() -> CascadingSingleChoice:
+    return CascadingSingleChoice(
         title=Title("Result cache"),
         help_text=Help(RESULT_CACHE_HELP),
-        valuespec=_ResultCacheValueSpec(),
+        migrate=_migrate_cache_enabled,
+        prefill=DefaultValue("enabled"),
+        elements=(
+            CascadingSingleChoiceElement(
+                name="disabled",
+                title=Title("Disabled"),
+                parameter_form=FixedValue(value=None),
+            ),
+            CascadingSingleChoiceElement(
+                name="enabled",
+                title=Title("Enabled"),
+                parameter_form=Dictionary(
+                    elements={
+                        "cache_ttl": DictElement(
+                            required=True,
+                            parameter_form=Integer(
+                                title=Title("Result cache TTL"),
+                                help_text=Help(
+                                    "Cache validity in seconds. Default: 3600 seconds (1 hour)."
+                                ),
+                                unit_symbol="seconds",
+                                prefill=DefaultValue(DEFAULT_CACHE_TTL_SECONDS),
+                                custom_validate=(validators.NumberInRange(min_value=0),),
+                            ),
+                        ),
+                        "cache_stale_on_error": DictElement(
+                            # required=True avoids the double-checkbox rendering
+                            # artifact optional BooleanChoice elements have in
+                            # Checkmk's current form-spec renderer.
+                            required=True,
+                            parameter_form=BooleanChoice(
+                                title=Title("Use stale cache on collection error"),
+                                help_text=Help(
+                                    "If fresh Hetzner API collection fails after the cache has expired, emit "
+                                    "the stale cached payload with visible cache status instead of returning "
+                                    "only the collection error. Storage usage thresholds are still evaluated "
+                                    "against the returned cached dataset."
+                                ),
+                                prefill=DefaultValue(True),
+                            ),
+                        ),
+                    },
+                ),
+            ),
+        ),
     )
 
 

@@ -1,8 +1,8 @@
 # checkmk-hetzner-storagebox
 
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue)
-![Checkmk](https://img.shields.io/badge/Tested%20with-Checkmk%202.4.0-green)
-![Release](https://img.shields.io/github/v/release/47k/checkmk-hetzner-storagebox)
+![Checkmk](https://img.shields.io/badge/Compatible%20with-Checkmk%202.4%20%7C%202.5-green)
+![Release](https://img.shields.io/github/v/release/TonyBostonTB/checkmk-hetzner-storagebox)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 
 Checkmk 2.x MKP plugin for monitoring Hetzner Storage Boxes through the Hetzner Console API.
@@ -54,7 +54,7 @@ The agent follows `meta.pagination` / `pagination` information when the API retu
 Build or download the `.mkp` package, then install it as the Checkmk site user:
 
 ```bash
-mkp add hetzner_storagebox-0.1.2.mkp
+mkp add hetzner_storagebox-0.2.0.mkp
 mkp enable hetzner_storagebox
 cmk -R
 ```
@@ -299,8 +299,8 @@ CRIT - API error (auth_error): HTTP 401 Unauthorized while fetching https://api.
 - The plugin monitors Storage Box metadata and capacity usage only. It does not test protocol-level access such as SSH, SFTP, SMB, Borg, or WebDAV.
 - Filtering is by Storage Box ID, not username.
 
-These limitations describe the intended scope of the 0.1.2 release.
+These limitations describe the intended scope of the 0.2.0 release.
 
 ## Author
 
-Manuel "Overlord" Michalski <www.47k.de>
+Tony Boston <tboston@csitlab.org>

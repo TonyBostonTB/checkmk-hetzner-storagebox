@@ -1,14 +1,14 @@
 name: hetzner_storagebox
 title: Hetzner Storage Box Monitoring
-version: 0.1.3
-author: Manuel "Overlord" Michalski <www.47k.de>
-description: Checkmk special agent for monitoring Hetzner Storage Boxes via the Hetzner Console API.
+version: 0.2.0
+author: Tony Boston (tboston@csitlab.org)
+description: Checkmk special agent for monitoring Hetzner Storage Boxes via the Hetzner Console API. 0.2.0 fixes Checkmk 2.5 compatibility (rulesets no longer depend on the removed cmk.gui.form_specs.private API).
 license: Apache-2.0
 min_version: 2.4.0
 edition:
   - cre
   - cee
-download_url: https://github.com/47k/checkmk-hetzner-storagebox
+download_url: https://github.com/TonyBostonTB/checkmk-hetzner-storagebox
 files:
   - cmk_addons/plugins/hetzner_storagebox/agent_based/hetzner_storagebox.py
   - cmk_addons/plugins/hetzner_storagebox/graphing/hetzner_storagebox.py
